@@ -1,4 +1,6 @@
 #water jug problem 
+
+#queue used below
 class queue:
     def __init__(self):
         self.lista = []
@@ -14,16 +16,36 @@ class queue:
             return True
         return False
 
+class stack:
+    def __init__(self):
+        self.lista= []
+    def poop(self):
+        return self.lista.pop()
+    
+    def push(self,thing):
+        return self.lista.append(thing)
+    
+    def isempty(self):
+        if len(self.lista) == 0:
+            return True
+        return False
+
+    
 
 class node:
     def __init__(self,value):
         #plug in a list
         self.value = value # (x,y)
         self.neighbors = []
+        self.level = None   #to show the depth level to check in IDS
 
     def add_neighbor(self,value):
         if value not in self.neighbors:  # Avoid duplicate neighbors
             self.neighbors.append(value)
+
+    def change_lvl(self, depth):
+        self.level = int(depth)
+        #return True
 
 class grapth:
     '''the grapth is undirected and non-weighted'''
@@ -39,7 +61,7 @@ class grapth:
         self.path = {}
        
         
-
+#BFS Algorithm
     def bfs(self, target):
         """Performs BFS to find the shortest sequence of steps to reach the target volume."""
         q = queue()
@@ -88,6 +110,53 @@ class grapth:
 
         return steps
 
+#Iterative-Deepening Search Algorithm
+def dls(self,target,limit):
+    #return how to find the target if found or ret false
+    return True
+
+def ids(self, target,limit):
+    """Performs DPS to find the shortest sequence of steps to reach the target volume."""
+    #frontier ← stack containing Make-Node(problem.initial)
+    sk = stack()
+    sk.push(self.start)
+    #add depth value to node starting
+    self.visited.add(tuple(self.start))  # Convert list to tuple for immutability
+    self.path[tuple(self.start)] = None  # Store parent for backtracking
+    
+    #while frontier ̸= ∅ do
+    while not sk.isempty():
+        #node ← POP(frontier ) 
+        current = sk.poop()
+        x, y = current  # Current state of the jugs
+        
+        # If we reached the target, reconstruct the path
+        if x == target or y == target:
+            #return SOLUTION(node)
+            return self.reconstruct_path((x, y))
+        
+        # Generate all possible next states
+        #A ← ACTIONS(problem, node.state)
+        next_states = [
+            (self.maxJuga, y),  # Fill Jug A
+            (x, self.maxJugb),  # Fill Jug B
+            (0, y),             # Empty Jug A
+            (x, 0),             # Empty Jug B
+            (x - min(x, self.maxJugb - y), y + min(x, self.maxJugb - y)),  # Pour A → B
+            (x + min(y, self.maxJuga - x), y - min(y, self.maxJuga - x))   # Pour B → A
+        ]
+
+        # Process each valid state
+        #for each a ∈ REVERSE(A) do 
+        for state in next_states:
+            #s′ ← TRANSITION(node.state, a)
+            if state not in self.visited:
+                #PUSH(frontier , child)
+                sk.push(state)
+                self.visited.add(state)
+                self.path[state] = (x, y)  # Store where it came from
+    #return failure
+    return "unreachable"
 
 
 def __main__():
