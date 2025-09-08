@@ -1,5 +1,5 @@
 from search_algorithms import grapth
-import timeit
+import time
 
 
 def print_results(graph_object, path, algorithm_name):
@@ -39,18 +39,25 @@ def __main__():
 
     graph = grapth(start_state, maxA, maxB)
      # --- Run BFS ---
+    start_time = time.time() 
     bfs_path = graph.bfs(target)
+    end_time = time.time()
     # Pass the object, path, and name to the print function
     print_results(graph, bfs_path, "BFS")
+    duration = end_time - start_time
+    print(f"Time elapsed: {duration:.6f} seconds")
+    
+    grapha = grapth(start_state, maxA, maxB)
+    start_time2 = time.time()
+    ids_path = grapha.ids(target)
+    end_time2 = time.time() 
+    print_results(grapha, ids_path, "IDS")
+    duration2 = end_time2 - start_time2
+    print(f"Time elapsed: {duration2:.6f} seconds")
+
 
     print("\n" + "="*40 + "\n")
-    #input("press enter:")
-
-    grapha = grapth(start_state, maxA, maxB)
-
-    ids_path = grapha.ids(target)
-    print_results(grapha, ids_path, "IDS")
-
+    print("\n" + "="*40 + "\n")
 
     start_state = [0, 0]
     maxAa = 11
@@ -59,18 +66,23 @@ def __main__():
 
     ggraph = grapth(start_state, maxAa, maxBb)
      # --- Run BFS ---
-    bfs_path = ggraph.bfs(target)
+    start_time = time.time() 
+    bfs_path = ggraph.bfs(targett)
+    end_time = time.time()
+    duration = end_time - start_time
     # Pass the object, path, and name to the print function
     print_results(ggraph, bfs_path, "BFS")
-
-    print("\n" + "="*40 + "\n")
+    print(f"Time elapsed: {duration:.6f} seconds")
+    
     #input("press enter:")
 
     agrapha = grapth(start_state, maxAa, maxBb)
-
-    ids_path = agrapha.ids(target)
+    start_time2 = time.time()
+    ids_path = agrapha.ids(targett)
+    end_time2 = time.time()
     print_results(agrapha, ids_path, "IDS")
-
+    duration2 = end_time2 - start_time2
+    print(f"Time elapsed: {duration2:.6f} seconds")
 
     #not ready
 def main1():
@@ -92,7 +104,7 @@ Nodes generated: 23 | Nodes expanded: 15 | Max frontier: 6
 Path:
   1) Move Goat       (L,L,L,L) -> (R,L,R,L)
   2) Return alone    (R,L,R,L) -> (L,L,R,L)
-  ...
+    ...
 
 
 '''

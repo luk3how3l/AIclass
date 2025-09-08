@@ -127,11 +127,11 @@ class grapth:
             return self.start
         response  = "unreachable"
         limit = 1
-        while response == "unreachable" and limit < 30:
+        while response == "unreachable" and limit < 60:
             response = self.dls(target,limit)
             limit += 1
             #self.max_frontier_size = limit
-            print("the limit is at:",limit)
+            #print("the limit is at:",limit)
         return response
 
     def dls(self, target,limit):
