@@ -38,6 +38,7 @@ class node:
         self.value = value # (x,y)
         self.neighbors = []
         self.level = None   #to show the depth level to check in IDS
+        self.cost = 0
 
     def add_neighbor(self,value):
         if value not in self.neighbors:  # Avoid duplicate neighbors
@@ -46,6 +47,10 @@ class node:
     def change_lvl(self, depth):
         self.level = int(depth)
         #return True
+    def change_cost(self, price):
+        self.cost = int(price)
+        #return True
+
 
 class grapth:
     '''the grapth is undirected and non-weighted'''
@@ -53,7 +58,7 @@ class grapth:
         #mapping
         #self.start l= (start,depth)
         self.start = start
-       
+        self.problem = None
         self.visited = set()
         self.maxJuga = maxA
         self.maxJugb = maxB
@@ -66,6 +71,10 @@ class grapth:
     def clean_visited(self):
         self.visited = set()
         return
+    
+    def insert_problem(self,object):
+        self.problem = object
+        return True
        
         
 #BFS Algorithm
@@ -183,88 +192,21 @@ class grapth:
 
         return "unreachable"
     
-
-
-
-    def usc(self, target,limit):
-        """
-        Performs a Uniform-Cost Search to find the lowest-cost path from a start state to a goal.
-
-        This algorithm explores a graph by always expanding the node with the lowest path cost (g-score) from
-        the start. It is optimal for finding the cheapest path, provided all step costs are positive.
-
-        Args:
-            start_state: The state where the search begins.
-            goal_test_func: A function that takes a state and returns True if it is a goal state.
-            actions_func: A function that takes a state and returns a list of all possible actions.
-            transition_func: A function that takes a state and an action, and returns the resulting state.
-            step_cost_func: A function that takes a state and an action, and returns the cost of that step.
-
-        Returns:
-            A list representing the solution path from the start state to the goal state, or None if no
-            solution is found.
-        """
-        #
-        # HINT 1: The frontier needs to be a min-priority queue. Python's `heapq` module is perfect for this.
-        # You can use a simple list and the `heapq.heappush()` and `heapq.heappop()` functions to manage it.
-        # To make it a min-priority queue, store items as tuples of `(cost, state)`.
-        # The heapq will automatically sort by the first element, which is the cost.
-        frontier = []
-
-        #
-        # HINT 2: Initialize the best_g map (a dictionary in Python) and the frontier.
-        # The 'best_g' dictionary will store the lowest cost found so far to reach each state.
-        # This dictionary also effectively acts as your "explored" or "visited" set.
-        best_g = {start_state: 0}
-        heapq.heappush(frontier, (0, start_state)) # Push (cost, state) onto the priority queue
-
-        #
-        # HINT 3: You'll also need a way to reconstruct the final path. A 'parent' dictionary is a great
-        # way to do this, storing `parent[child_state] = parent_state`. Initialize it for the start.
-        parent_map = {start_state: None}
-
-        #
-        # HINT 4: The main loop continues as long as there are nodes to explore in the frontier.
-        while frontier:
-            #
-            # HINT 5: Pop the node with the lowest cost from the priority queue using `heapq.heappop()`.
-            # This will return the tuple with the smallest cost value. Unpack it.
-            g_cost, current_state = heapq.heappop(frontier)
-
-            #
-            # HINT 6: After popping a node, check if it's the goal. If it is, you've found the
-            # cheapest path to a goal because you always expand the lowest-cost node first.
-            # Use your 'parent_map' to reconstruct and return the solution path.
-            if goal_test_func(current_state):
-                # return reconstruct_path(parent_map, current_state) # A helper function you'd write
-                pass
-
-            #
-            # HINT 7: Iterate through all possible actions from the current state to find its neighbors.
-            for action in actions_func(current_state):
-                #
-                # HINT 8: Calculate the child state and the new path cost (g') to reach it.
-                child_state = transition_func(current_state, action)
-                new_g_cost = g_cost + step_cost_func(current_state, action)
-
-                #
-                # HINT 9: This is the core logic of UCS. 🗺️
-                # You only explore this path if the child state has NEVER been seen before, OR if you've
-                # found a NEW, CHEAPER path to a state you've already visited.
-                if child_state not in best_g or new_g_cost < best_g[child_state]:
-                    #
-                    # HINT 10: If the condition is met, update your records. Store the new, lower cost
-                    # in your 'best_g' map, record the parent for path reconstruction, and push the
-                    # new `(cost, state)` pair onto the frontier for exploration.
-                    best_g[child_state] = new_g_cost
-                    parent_map[child_state] = current_state
-                    heapq.heappush(frontier, (new_g_cost, child_state))
-
-        #
-        # HINT 11: If the `while` loop finishes, it means the frontier is empty but the goal was
-        # never reached. Return failure (e.g., None or an empty list).
-        return None
-            
+    def Heuristics(self, value):
+        if value == 0:
+            return 0
+        if value == 42:
+            kount = 0
+            #how many are out of place
+            for i in range(self.problem.state):
+                if self.problem.goalstate != self.problem.state:
+                    kount += 1
+            return kount
+        if value == 67:
+            #mattaham grid
+            #do some math
+            #implement later
+            return 0
     
 
     def Astar(self,target,limit):
@@ -313,7 +255,7 @@ class grapth:
         # HINT 4: Create the initial root node and calculate its f-score. The g-score (cost from start)
         # for the root node is always 0.
         g_score = 0
-        h_score = heuristic_func(start_state)
+        h_score = Heuristics(start_state)
         f_score = g_score + h_score
         root_node = (start_state, None, g_score) # (state, parent, g_score)
 
