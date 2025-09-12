@@ -3,7 +3,7 @@ create the first the instance 8 piece
 
 '''
 
-import search_algorithms as sza
+from search_algorithms import grapth
 
 
 class eight_piece:
@@ -13,58 +13,52 @@ class eight_piece:
         self.finalstate = endgoal
         self.blank = self.find_blank()
         self.aaction = []
+        self.g = 0
 
-
-    def action(self):
+    def get_action(self, state):
         actions = []
-        #logic if the 0 is not the index positions 2,5,8. then left is valid
-        if self.blank != 2 and self.blank != 5 and self.blank != 8:
-            actions.append("Right")
-        if self.blank != 0 and self.blank != 1 and self.blank != 2:
-            actions.append("Up")
-        if self.blank != 0 and self.blank != 3 and self.blank != 6:
-            actions.append("Left")
-        if self.blank != 6 and self.blank != 7 and self.blank != 8:
-            actions.append("Down")
-        if self.blank > 8 or self.blank < 0:
-            print("something went wrong")
+        # This uses the blank from the CURRENT state being considered
+        blank_pos = state.index(0) 
         
-        self.aaction = actions
+        if blank_pos not in [0, 1, 2]:
+            actions.append("Up")
+        if blank_pos not in [6, 7, 8]:
+            actions.append("Down")
+        if blank_pos not in [0, 3, 6]:
+            actions.append("Left")
+        if blank_pos not in [2, 5, 8]:
+            actions.append("Right")
+            
         return actions
     
-    def Goal_Test(self):
-        if self.state == self.finalstate:
+    def Goal_Test(self,state):
+        if state == self.finalstate:
             print("Goal has been achieved")
             return True
         else: 
             return False
         
-    def Transition(self,nowaction):
+    def Transition(self, state, nowaction):
         # Create a copy of the current state to avoid modifying the original list in place
-        new_state = list(self.state)
-        blank_index = self.find_blank()
-        target_index = -1
-        #sanity check
-        if nowaction == "Right" and blank_index not in [2, 5, 8]:
-            target_index = blank_index + 1
-        elif nowaction == "Left" and blank_index not in [0, 3, 6]:
-            target_index = blank_index - 1
-        elif nowaction == "Up" and blank_index not in [0, 1, 2]:
-            target_index = blank_index - 3
-        elif nowaction == "Down" and blank_index not in [6, 7, 8]:
-            target_index = blank_index + 3
-        else:
-            # The action is invalid for the current state.
-            print(f"Invalid action: {nowaction} for current state.")
-            return None
+        new_state = list(state)
+        blank_pos = new_state.index(0)
+        
 
+        if nowaction == "Up":
+            swap_pos = blank_pos - 3
+        elif nowaction == "Down":
+            swap_pos = blank_pos + 3
+        elif nowaction == "Left":
+            swap_pos = blank_pos - 1
+        elif nowaction == "Right":
+            swap_pos = blank_pos + 1
+        else:
+            return new_state # Should not happen with valid actions
         # Perform the swap
-        new_state[blank_index], new_state[target_index] = new_state[target_index], new_state[blank_index]
-        #do I want it to change the state now??? below
-        self.state = new_state
-        self.blank = target_index
+        new_state[blank_pos], new_state[swap_pos] = new_state[swap_pos], new_state[blank_pos]
         return new_state
-    
+
+        
 
     def find_blank(self):
         #find black in what positon
@@ -75,8 +69,25 @@ class eight_piece:
                 blank_pos = self.state.index(pos)
                 continue
         return blank_pos
+    
+    
+    def c(self,parent_node):
+        #check if the aprent node is root, start at one
+        if parent_node.parent == None:
+            self.g = 1
+            return  
+        else:
+            self.g = parent_node.g + 1
 
-def build_start_instance():
+    
+        
+
+
+#main that use class eight piece and grapth to use the A* algorithm
+
+
+
+def build_start_instance1():
     #states, start, final, trasition, action
     start_state = [1,2,3,4,5,6,0,7,8]
     endgoal = [1,2,3,4,5,6,7,8,0]
@@ -84,15 +95,91 @@ def build_start_instance():
     puzzle_instance = eight_piece(start_state, endgoal)
     return puzzle_instance
 
+def build_start_instance2():
+    #states, start, final, trasition, action easy
+    # An "easy" puzzle that can be solved in a few steps.
+    start_state = [1, 2, 3, 4, 0, 5, 7, 8, 6] 
+    endgoal_state = [1, 2, 3, 4, 5, 6, 7, 8, 0]
 
-if __name__ == "__main__":
+    puzzle_problem = eight_piece(start_state, endgoal_state)
+    return puzzle_problem
+
+def build_start_instance3():
+    #states, start, final, trasition, action easy
+    # An "easy" puzzle that can be solved in a few steps.
+    start_state = [1, 6, 2, 7, 4, 3, 5, 0, 8] 
+    endgoal_state = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+
+    puzzle_problem = eight_piece(start_state, endgoal_state)
+    return puzzle_problem
+
+def build_instance(state):
+    start_state = state 
+    endgoal_state = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+
+    puzzle_problem = eight_piece(start_state, endgoal_state)
+    return puzzle_problem
+
+def instance_list():
+    """
+    Returns a list of 10 solvable 8-puzzle start states.
+    The goal state is assumed to be [1, 2, 3, 4, 5, 6, 7, 8, 0].
+    """
+    puzzle_list = [
+        # Easy
+        [1, 2, 3, 4, 5, 6, 7, 0, 8],
+        [1, 2, 3, 4, 0, 5, 7, 8, 6],
+        # Medium
+        [1, 3, 0, 4, 2, 5, 7, 8, 6],
+        [4, 1, 2, 7, 0, 3, 8, 5, 6],
+        [5, 1, 7, 2, 3, 8, 0, 4, 6],
+        # Hard
+        [7, 2, 4, 5, 0, 6, 8, 3, 1],
+        [8, 6, 7, 2, 5, 4, 3, 0, 1],
+        [6, 4, 7, 8, 5, 0, 3, 2, 1],
+        # Edge Cases
+        [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        [1, 2, 3, 4, 5, 6, 8, 7, 0]
+    ]
+    return puzzle_list
+
+def list_h():
+    llist = [
+        0,42,69
+    ]
+    return llist
+
+def solve_puzzle():
+    """
+    Sets up and solves an instance of the 8-puzzle.
+    """
+    puzzle_problem = build_start_instance3()
+    search_agent = grapth(puzzle_problem)
+
+    print("Solving 8-Puzzle...")
+    print("Start State:", puzzle_problem.start)
+    print("Goal State: ", puzzle_problem.finalstate)
+    print("-" * 25)
+
+    # Solve using the Manhattan distance heuristic
+    solution_path = search_agent.Astar(0)
+
+    if solution_path:
+        print("Solution Found!")
+        for i, state in enumerate(solution_path):
+            print(f"Step {i}: {state}")
+    else:
+        print("No solution found.")
+
+
+def check_state_ai():
     # Create the puzzle instance
     '''start
     [1,2,3,
     4,5,6,
     0,7,8]
     '''
-    puzzle = build_start_instance()
+    puzzle = build_start_instance1()
     
     # Print the initial state
     print("Initial State:", puzzle.state)
@@ -124,4 +211,34 @@ if __name__ == "__main__":
 
     print("\nChecking if goal is reached...")
     print("Goal reached:", puzzle.Goal_Test())
+
+def solve_puzzles():
+    """
+    Sets up and solves an instance of the 8-puzzle.
+    """
+
+    #heuristic_list = list_h()
+    puzzleinstances = instance_list()
+    for instances in puzzleinstances:
+        puzzle_problem = build_instance(instances)
+        search_agent = grapth(puzzle_problem)
+
+        print("Solving 8-Puzzle...")
+        print("Start State:", puzzle_problem.start)
+        print("Goal State: ", puzzle_problem.finalstate)
+        print("-" * 25)
+
+        # Solve using the Manhattan distance heuristic
+        solution_path = search_agent.Astar(0)
+
+        if solution_path:
+            print("Solution Found!")
+            for i, state in enumerate(solution_path):
+                print(f"Step {i}: {state}")
+        else:
+            print("No solution found.")
+
+
+if __name__ == "__main__":
+    solve_puzzles()
 

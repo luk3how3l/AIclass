@@ -1,5 +1,7 @@
 #water jug problem 
+import heapq
 import itertools # Useful for a tie-breaking counter
+#from eightpiecepart1 import eight_piece
 #queue used below
 class queue:
     def __init__(self):
@@ -33,13 +35,25 @@ class stack:
     
 
 class node:
-    def __init__(self,value):
+    def __init__(self,state,action,parent,g,h_score ):
         #plug in a list
-        self.value = value # (x,y)
-        self.neighbors = []
+        self.state = state # [1,2,3...]
+        self.parentnode = parent #point to parent
+        self.action = action
         self.level = None   #to show the depth level to check in IDS
-        self.cost = 0
+        self.cost = g
+        self.h_score = h_score
+        self.f_score= g + h_score
+        
+    def __lt__(self, other):
+        return self.f_score < other.f_score
 
+   
+    def change_cost(self, price):
+        self.cost = int(price)
+        #return True
+
+    
     def add_neighbor(self,value):
         if value not in self.neighbors:  # Avoid duplicate neighbors
             self.neighbors.append(value)
@@ -47,21 +61,18 @@ class node:
     def change_lvl(self, depth):
         self.level = int(depth)
         #return True
-    def change_cost(self, price):
-        self.cost = int(price)
-        #return True
-
+    
 
 class grapth:
-    '''the grapth is undirected and non-weighted'''
-    def __init__(self,start,maxA,maxB):
+    '''the grapth is directed and weighted'''
+    def __init__(self,problem):
         #mapping
         #self.start l= (start,depth)
-        self.start = start
-        self.problem = None
-        self.visited = set()
-        self.maxJuga = maxA
-        self.maxJugb = maxB
+        #self.start = start
+        self.problem = problem
+        #self.visited = set()
+        #self.maxJuga = maxA
+        #self.maxJugb = maxB
         self.path = {}
         #stats
         self.nodes_expanded = 0
@@ -72,9 +83,29 @@ class grapth:
         self.visited = set()
         return
     
-    def insert_problem(self,object):
-        self.problem = object
-        return True
+    def Heuristics(self,state, value):
+        goal = self.problem.finalstate
+        curr_state= state
+
+        if value == 42:
+            kount = 0
+            #how many are out of place
+            for i in range(curr_state):
+                if goal[i] != curr_state[i]:
+                    kount += 1
+            return kount
+        if value == 67:
+            #mattaham grid
+            
+            distance = 0
+            for i in range(0, 8):
+                current_pos = curr_state.index(i)
+                goal_pos = goal.index(i)
+                current_row, current_col = divmod(current_pos, 3)
+                goal_row, goal_col = divmod(goal_pos, 3)
+                distance += abs(current_row - goal_row) + abs(current_col - goal_col)
+            return distance
+        return 0
        
         
 #BFS Algorithm
@@ -116,18 +147,28 @@ class grapth:
 
     def reconstruct_path(self, end_state):
         """Reconstructs and prints the path from the start to the target state."""
-        steps = []
-        while end_state is not None:
-            steps.append(end_state)
-            end_state = self.path[end_state]
-        steps.reverse()
-        
-        print("Steps to reach the target:")
-        for step in steps:
-            self.max_frontier_size += 1
-            print(step)
+        if not isinstance(end_state, node):
+            steps = []
+            while end_state is not None:
+                steps.append(end_state)
+                end_state = self.path[end_state]
+            steps.reverse()
+            
+            print("Steps to reach the target:")
+            for step in steps:
+                self.max_frontier_size += 1
+                print(step)
 
-        return steps
+            return steps
+        else:
+            """
+            Backtracks from the goal node construct the solution path.
+            """
+            path = []
+            while end_state:
+                path.append(end_state.state)
+                end_state = end_state.parentnode
+            return list(reversed(path))
 
     #Iterative-Deepening Search Algorithm
     def ids(self,target):
@@ -192,111 +233,60 @@ class grapth:
 
         return "unreachable"
     
-    def Heuristics(self, value):
-        if value == 0:
-            return 0
-        if value == 42:
-            kount = 0
-            #how many are out of place
-            for i in range(self.problem.state):
-                if self.problem.goalstate != self.problem.state:
-                    kount += 1
-            return kount
-        if value == 67:
-            #mattaham grid
-            #do some math
-            #implement later
-            return 0
     
+    '''
+    def backtrack_path_function(self, node):
+        return int(0)
+    '''
 
-    def Astar(self,target,limit):
+    def Astar(self, heuristic):
         """
         Performs an A* Tree Search to find the lowest-cost path from a start state to a goal.
 
         A* search is an informed search algorithm that balances the cost to reach a node (g-score)
         with an estimated cost to get from that node to the goal (h-score from the heuristic).
-        The evaluation function is f(n) = g(n) + h(n).
-
-        This implementation is for a TREE SEARCH, meaning it does not check for previously visited
-        states. This is faster but is only optimal if the graph is a tree (has no cycles).
-
-        Args:
-            start_state: The state where the search begins.
-            goal_test_func: A function that takes a state and returns True if it is a goal state.
-            actions_func: A function that takes a state and returns a list of all possible actions.
-            transition_func: A function that takes a state and an action, and returns the resulting state.
-            step_cost_func: A function that takes a state and an action, and returns the cost of that step.
-            heuristic_func: A function that takes a state and returns an estimated cost to the goal (h-score).
-
-        Returns:
-            A list representing the solution path from the start state to the goal state, or None if no
-            solution is found.
+        The evaluation function is f(n) = g(n) + h(n)
         """
-        #
-        # HINT 1: The frontier is a min-priority queue ordered by the f-score. As with UCS,
-        # Python's `heapq` module is the right tool.
-        frontier = []
-
-        #
-        # HINT 2: A* needs to track not just the state, but also its parent and its g-score.
-        # A simple helper class or a `collections.namedtuple` is a great way to create a 'Node'
-        # to store this information (e.g., Node(state, parent, g_score)).
-        #
-        # from collections import namedtuple
-        # Node = namedtuple('Node', ['state', 'parent', 'g_score'])
-
-        #
-        # HINT 3: To handle cases where two nodes have the same f-score, it's good practice
-        # to add a unique, incrementing counter as a tie-breaker. The heapq will then sort by
-        # (f_score, counter, node).
-        tie_breaker = itertools.count()
-
-        #
-        # HINT 4: Create the initial root node and calculate its f-score. The g-score (cost from start)
-        # for the root node is always 0.
-        g_score = 0
-        h_score = Heuristics(start_state)
-        f_score = g_score + h_score
-        root_node = (start_state, None, g_score) # (state, parent, g_score)
-
-        #
-        # HINT 5: Push the first node onto the frontier with its f-score and the tie-breaker.
-        heapq.heappush(frontier, (f_score, next(tie_breaker), root_node))
-
-        #
-        # HINT 6: The main loop continues as long as there are nodes to explore in the frontier.
+        start_state = self.problem.state
+        # ordered by the f-score. nodes
+        h_score = self.Heuristics(start_state, heuristic)
+        root_node = node(state=start_state, parent=None, action=None, g=0, h_score=h_score)
+        
+        #frontier ← min-priority queue by f (n) = g(n) + h(n)
+        frontier = [root_node]
+        
+        explored_states = {}
+        explored_states[tuple(start_state)] = 0
+        
         while frontier:
-            #
-            # HINT 7: Pop the node with the lowest f-score. The item will be the full tuple,
-            # but you only need to work with the node object itself.
-            f_cost, _, current_node = heapq.heappop(frontier)
-            current_state, current_parent, current_g_score = current_node
+            current_node = heapq.heappop(frontier)
+            if self.problem.Goal_Test(current_node.state):
+                return self.reconstruct_path(current_node)
 
-            #
-            # HINT 8: Check if the state of the popped node is the goal. If so, you've found the solution.
-            # You would then write a helper function to backtrack from this node using its parent pointers.
-            if goal_test_func(current_state):
-                # return reconstruct_path_from_node(current_node)
-                pass
+            for action in self.problem.get_action(current_node.state):
+                child_state = self.problem.Transition(current_node.state, action)
+                new_g_score = current_node.cost + 1
 
-            #
-            # HINT 9: Expand the current node by generating all of its children. ⭐️
-            for action in actions_func(current_state):
-                #
-                # HINT 10: For each action, calculate the child's state and its g-score.
-                child_state = transition_func(current_state, action)
-                g_prime = current_g_score + step_cost_func(current_state, action)
+                #g_prime = current_g_score + step_cost_func(current_state, action)
+                #redo
+                if tuple(child_state) in explored_states and explored_states[tuple(child_state)] <= new_g_score:
+                    continue
+                
+                explored_states[tuple(child_state)] = new_g_score
+                
 
-                #
-                # HINT 11: Create the new child node, calculate its f-score using the heuristic,
-                # and push it onto the frontier.
-                # NOTE: Because this is a TREE search, we do NOT check if we've seen this state before.
-                # We simply create a new node for every child and add it to the frontier.
-                h_prime = heuristic_func(child_state)
-                f_prime = g_prime + h_prime
-                child_node = (child_state, current_node, g_prime) # (state, parent_node, g_score)
+                # Calculate the child's h-score and create the node
+                h_prime = self.Heuristics(child_state, heuristic)
+                child_node = node(state=child_state, 
+                                  parent=current_node, 
+                                  action=action, 
+                                  g=new_g_score, 
+                                  h_score=h_prime)
+                
+                # Push the new child node onto the frontier
+                heapq.heappush(frontier, child_node)
 
-                heapq.heappush(frontier, (f_prime, next(tie_breaker), child_node))
+                #heapq.heappush(frontier, (f_prime, next(tie_breaker), child_node))
 
         #
         # HINT 12: If the loop finishes, the frontier is empty but the goal was never found.
