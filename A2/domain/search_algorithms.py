@@ -70,14 +70,9 @@ class grapth:
         #self.start l= (start,depth)
         #self.start = start
         self.problem = problem
-        #self.visited = set()
-        #self.maxJuga = maxA
-        #self.maxJugb = maxB
+        self.reset_metrics()
         self.path = {}
         #stats
-        self.nodes_expanded = 0
-        self.nodes_generated = 0
-        self.max_frontier_size = 0
         
     def clean_visited(self):
         self.visited = set()
@@ -90,8 +85,8 @@ class grapth:
         if value == 42:
             kount = 0
             #how many are out of place
-            for i in range(curr_state):
-                if goal[i] != curr_state[i]:
+            for i in range(len(state)):
+                if state[i] != 0 and state[i] != goal[i]:
                     kount += 1
             return kount
         if value == 67:
@@ -234,19 +229,26 @@ class grapth:
         return "unreachable"
     
     
-    '''
-    def backtrack_path_function(self, node):
-        return int(0)
-    '''
+    def reset_metrics(self):
+        """Resets metrics for a new search."""
+        self.nodes_expanded = 0
+        self.nodes_generated = 0
+        self.max_frontier_size = 0
+        self.solution_cost = 0
+
+    def get_metrics(self):
+        """Returns a dictionary of the final search metrics."""
+        return {
+            "Nodes Expanded": self.nodes_expanded,
+            "Nodes Generated": self.nodes_generated,
+            "Max Frontier Size": self.max_frontier_size,
+            "Solution Cost/Depth": self.solution_cost
+        }
 
     def Astar(self, heuristic):
-        """
-        Performs an A* Tree Search to find the lowest-cost path from a start state to a goal.
+        
+        self.reset_metrics() # Reset stats for this run
 
-        A* search is an informed search algorithm that balances the cost to reach a node (g-score)
-        with an estimated cost to get from that node to the goal (h-score from the heuristic).
-        The evaluation function is f(n) = g(n) + h(n)
-        """
         start_state = self.problem.state
         # ordered by the f-score. nodes
         h_score = self.Heuristics(start_state, heuristic)
@@ -254,27 +256,30 @@ class grapth:
         
         #frontier ← min-priority queue by f (n) = g(n) + h(n)
         frontier = [root_node]
-        
+        self.nodes_generated = 1 #<-- METRIC
+        self.max_frontier_size = 1 #<-- METRIC
+
         explored_states = {}
         explored_states[tuple(start_state)] = 0
         
         while frontier:
+            self.max_frontier_size = max(self.max_frontier_size, len(frontier)) #<___METRRIC
+
             current_node = heapq.heappop(frontier)
+            self.nodes_expanded += 1 #METRICCC
             if self.problem.Goal_Test(current_node.state):
+                self.solution_cost = current_node.cost
                 return self.reconstruct_path(current_node)
 
             for action in self.problem.get_action(current_node.state):
                 child_state = self.problem.Transition(current_node.state, action)
                 new_g_score = current_node.cost + 1
 
-                #g_prime = current_g_score + step_cost_func(current_state, action)
-                #redo
+
                 if tuple(child_state) in explored_states and explored_states[tuple(child_state)] <= new_g_score:
                     continue
                 
                 explored_states[tuple(child_state)] = new_g_score
-                
-
                 # Calculate the child's h-score and create the node
                 h_prime = self.Heuristics(child_state, heuristic)
                 child_node = node(state=child_state, 
@@ -282,14 +287,10 @@ class grapth:
                                   action=action, 
                                   g=new_g_score, 
                                   h_score=h_prime)
-                
+                self.nodes_generated += 1 #METRUCCI
                 # Push the new child node onto the frontier
                 heapq.heappush(frontier, child_node)
 
-                #heapq.heappush(frontier, (f_prime, next(tie_breaker), child_node))
-
-        #
-        # HINT 12: If the loop finishes, the frontier is empty but the goal was never found.
         return None
     
     
